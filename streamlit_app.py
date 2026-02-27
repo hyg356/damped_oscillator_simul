@@ -43,7 +43,7 @@ if st.button("Simulate"):
     fig = go.Figure(
         data=[
             go.Scatter(x=[fixed_x, frames_x[0]], y=[fixed_y, frames_y[0]],
-                       mode="lines", line=dict(color="black", width=2)),
+                       mode="lines", line=dict(color="white", width=2)),
             go.Scatter(x=[fixed_x, frames_x[0]], y=[fixed_y, frames_y[0]],
                        mode="markers",
                        marker=dict(color=["black", "red"], size=[12, 18])),
