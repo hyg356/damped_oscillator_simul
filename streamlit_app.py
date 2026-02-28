@@ -1,70 +1,81 @@
-import plotly.graph_objects as go
-import numpy as np
 import streamlit as st
+import numpy as np
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import time
 
-# --- Setup ---
-st.title("Damped Pendulum")
-gamma = st.number_input("Enter the value of gamma: ", min_value=0.0, value=0.1)
-angle = st.number_input("Enter the value of the release angle (degrees) : ",min_value=-90.0, max_value=90.0, value=-15.0)
+st.title("Damped Oscillator")
 
+fixed_x, fixed_y= 0,5
+
+col1, col2 = st.columns(2)
+
+pendulum_placeholder = col1.empty()
+graph_placeholder = col2.empty()
+
+gamma = st.number_input("Enter the value of gamma: ", min_value=0.00, max_value=50.00, value=0.15)
+angle = st.number_input("Enter the release angle (degrees): ", min_value=-90.0, max_value=90.0, value=-15.0)
 length = 5
-fixed_x, fixed_y = 0, 5
 g = 9.78
 dt = 0.05
 
-if st.button("Simulate"):
+theta = np.pi*angle / 180
+omega = 0
+current_time = 0
 
-    # --- 1. Pre-compute all frames (no rendering here) ---
-    theta = np.pi*angle/180
-    omega = 0
-    frames_x, frames_y = [], []
+time_vals = []
+theta_vals = []
 
-    for _ in range(1000):
-        alpha = (-g / length) * np.sin(theta) - (gamma * omega)
-        omega += alpha * dt
-        theta += omega * dt
+for _ in range(500):
 
-        frames_x.append(fixed_x + length * np.sin(theta))
-        frames_y.append(fixed_y - length * np.cos(theta))
+    alpha = (-g / length) * np.sin(theta) - (gamma * omega)
+    omega += alpha * dt
+    theta += omega * dt
 
-        if abs(omega) < 0.01 and abs(theta) < 0.01:
-            break
+    # ---- Pendulum Plot (Plotly) ----
+    x = fixed_x+length * np.sin(theta)
+    y = fixed_y-length * np.cos(theta)
 
-    # --- 2. Build a Plotly figure with all frames baked in ---
-    fig_frames = []
-    for x, y in zip(frames_x, frames_y):
-        fig_frames.append(go.Frame(data=[
-            go.Scatter(x=[fixed_x, x], y=[fixed_y, y],
-                       mode="lines", line=dict(color="black", width=2)),
-            go.Scatter(x=[fixed_x, x], y=[fixed_y, y],
-                       mode="markers",
-                       marker=dict(color=["black", "red"], size=[12, 18])),
-        ]))
+    
 
-    fig = go.Figure(
-        data=[
-            go.Scatter(x=[fixed_x, frames_x[0]], y=[fixed_y, frames_y[0]],
-                       mode="lines", line=dict(color="white", width=2)),
-            go.Scatter(x=[fixed_x, frames_x[0]], y=[fixed_y, frames_y[0]],
-                       mode="markers",
-                       marker=dict(color=["black", "red"], size=[12, 18])),
-        ],
-        layout=go.Layout(
-            xaxis=dict(range=[-6, 6], scaleanchor="y"),
-            yaxis=dict(range=[-1, 6]),
-            showlegend=False,
-            updatemenus=[dict(
-                type="buttons",
-                buttons=[dict(
-                    label="Play",
-                    method="animate",
-                    args=[None, dict(frame=dict(duration=50, redraw=True),
-                                    fromcurrent=True)]
-                )]
-            )]
-        ),
-        frames=fig_frames,
+    fig_pendulum = go.Figure()
+    
+    fig_pendulum.add_trace(go.Scatter(
+        x=[fixed_x, x],
+        y=[fixed_y, y],
+        mode="lines+markers"
+    ))
+    fig_pendulum.update_layout(
+        xaxis=dict(range=[-6,6]),
+        yaxis=dict(range=[-6,6], scaleanchor="x"),
+        showlegend=False
+    )
+    fig_pendulum.add_shape(
+    type="line",
+    x0=0, x1=0,
+    y0=-6, y1=6,
+    line=dict(color="gray", width=0.8, dash="dash")
+    )
+    fig_pendulum.add_shape(
+        type="line",
+        x0=-6, x1=6,
+        y0=0, y1=0,
+        line=dict(color="gray", width=0.8, dash="dash")
     )
 
-    st.plotly_chart(fig, use_container_width=True)
-    st.write(f"Simulation complete — {len(frames_x)} frames")
+    pendulum_placeholder.plotly_chart(fig_pendulum, use_container_width=True)
+
+    # ---- Oscillation Graph ----
+    time_vals.append(current_time)
+    theta_vals.append(theta)
+
+    fig2, ax = plt.subplots()
+    ax.plot(time_vals, theta_vals)
+    ax.axhline(0)
+    ax.set_xlabel("Time")
+    ax.set_ylabel("Theta")
+
+    graph_placeholder.pyplot(fig2)
+
+    current_time += dt
+    time.sleep(dt)
