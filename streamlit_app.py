@@ -5,7 +5,7 @@ import streamlit as st
 # --- Setup ---
 st.title("Damped Pendulum")
 gamma = st.number_input("Enter the value of gamma: ", min_value=0.0, value=0.1)
-angle = st.number_input("Enter the value of the release angle (degrees) : ",min_value=-90.0, max_value=90.0, angle=-15.0)
+angle = st.number_input("Enter the value of the release angle (degrees) : ",min_value=-90.0, max_value=90.0, value=-15.0)
 
 length = 5
 fixed_x, fixed_y = 0, 5
